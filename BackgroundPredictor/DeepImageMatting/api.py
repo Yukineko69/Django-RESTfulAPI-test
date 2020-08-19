@@ -43,6 +43,7 @@ def pred_trimap(img, trimap, model, device):
     return out, pred_numpy_reshape
 
 def pred_pre_trimap(img, pre_trimap, model, device):
+    pre_trimap = cv2.cvtColor(pre_trimap, cv2.COLOR_BGR2GRAY)
     mask = pre_trimap != 0
     cnts = cv2.findContours(pre_trimap, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     cnts = cnts[0] if len(cnts) == 2 else cnts[1]

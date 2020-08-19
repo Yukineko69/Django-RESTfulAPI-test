@@ -22,7 +22,7 @@ class PredictBackground(APIView):
         file_serializer = FileSerializer(data=request.data)
 
         if file_serializer.is_valid():
-            file_serializer.save()
+            file_instance = file_serializer.save()
             image_path = os.path.join(settings.BASE_DIR + file_serializer.data['image'])
             trimap_path = os.path.join(settings.BASE_DIR + file_serializer.data['trimap'])
             img = cv2.imread(image_path)
@@ -34,9 +34,19 @@ class PredictBackground(APIView):
             out, scale = pred_pre_trimap(img, pre_trimap, model, device)
 
             foreground = extract_foreground(img, scale)
+            
+            output_trimap_name = (file_instance.image.url.split('.')[0] + '_out_trimap.png').split('/')[2]
+            output_foreground_name = (file_instance.trimap.url.split('.')[0] + '_out_foreground.png').split('/')[2]
 
-            cv2.imwrite('output.jpg', out)
-            cv2.imwrite('foreground.jpg', foreground[...,::-1])
+            output_trimap_path = os.path.join(settings.BASE_DIR + '/media/' + output_trimap_name)
+            foreground_img_path = os.path.join(settings.BASE_DIR + '/media/' + output_foreground_name)
+
+            cv2.imwrite(output_trimap_path, out)
+            cv2.imwrite(foreground_img_path, foreground[...,::-1])
+
+            file_instance.output_trimap = output_trimap_name
+            file_instance.foreground_image = output_foreground_name
+            file_instance.save()
 
             return Response("OK", status=status.HTTP_200_OK)
         
